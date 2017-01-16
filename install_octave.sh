@@ -134,7 +134,7 @@ else
 	echo "Create new homebrew installation in $install_dir."
 	osacompile -o "$install_dir" -e " "
 	mkdir -p "$install_dir/Contents/Resources/usr"
-	curl -L https://github.com/Homebrew/homebrew/tarball/master | tar xz --strip 1 -C "$install_dir/Contents/Resources/usr"
+	curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C "$install_dir/Contents/Resources/usr"
 	cd "$install_dir/Contents/Resources/usr/bin"
 fi
 
@@ -151,10 +151,10 @@ fi
 cd "$install_dir/Contents/Resources/usr/bin"
 
 # install trash command line utility
-./brew install trash --universal
+./brew install trash
 
 # install gcc and set FC
-./brew install gcc --universal
+./brew install gcc
 export FC="$install_dir/Contents/Resources/usr/bin/gfortran"
 
 # get scietific libraries
@@ -163,17 +163,17 @@ export FC="$install_dir/Contents/Resources/usr/bin/gfortran"
 # enforce fltk (without fltk all native graphics is disabled and
 # e.g. gl2ps is not used. This will be untangled in Octave 4.2)
 # we use devel because fltk 1.3.3 does not work on recent Mac OS
-./brew install fltk --universal --devel
+./brew install fltk
 
 # create path for ghostscript
-./brew install ghostscript  --universal
+./brew install ghostscript
 gs_ver="$(./gs --version)"
 export GS_OPTIONS="-sICCProfilesDir=$install_dir/Contents/Resources/usr/opt/ghostscript/share/ghostscript/$gs_ver/iccprofiles/ -sGenericResourceDir=$install_dir/Contents/Resources/usr/opt/ghostscript/share/ghostscript/$gs_ver/Resource/ -sFontResourceDir=$install_dir/Contents/Resources/usr/opt/ghostscript/share/ghostscript/$gs_ver/Resource/Font"
 
 # install gnuplot 5.1 (HEAD)
-gnuplot_settings="--universal --with-cairo --universal --HEAD"
+gnuplot_settings="--with-cairo --HEAD"
 if [ "$build_gui" == "y" ]; then
-	gnuplot_settings="$octave_settings --with-qt5"	
+	gnuplot_settings="$gnuplot_settings --with-qt=qt5"	
 fi
 if [ -d "/Library/Frameworks/AquaTerm.framework" ]; then
 	gnuplot_settings="$gnuplot_settings --with-aquaterm"
@@ -183,7 +183,7 @@ fi
 ./brew install gnuplot $gnuplot_settings
 
 # icoutils
-./brew install icoutils --universal
+./brew install icoutils
 
 # use gcc for all scientific libraries
 if [ "$use_gcc" == "y" ]; then
@@ -192,13 +192,13 @@ if [ "$use_gcc" == "y" ]; then
 fi
 
 # install graphicsmagick and ensure quantum-depth-16
-./brew install graphicsmagick --universal --with-quantum-depth-16
+./brew install graphicsmagick --with-quantum-depth-16
 
 # install Qscintilla2 without python bindings
-./brew install qscintilla2 --universal --without-python --without-plugin --verbose
+./brew install qscintilla2 --without-python --without-plugin --verbose
 
 # we prefer openblas over Apple's BLAS implementation
-blas_settings="--universal"
+blas_settings=""
 if [ "$use_openblas" == "y" ]; then
 	blas_settings="$blas_settings --with-openblas"
 fi
@@ -212,7 +212,7 @@ if [ "$use_experimental" == "y" ]; then
 fi
 	
 # build octave
-octave_settings="--universal --without-docs --build-from-source --without-java --universal --with-audio --without-fltk --debug $blas_settings"
+octave_settings="--without-docs --build-from-source --without-java --with-audio --without-fltk --debug $blas_settings"
 if [ "$verbose" == "y" ]; then
 	octave_settings="$octave_settings --verbose"
 fi
@@ -220,9 +220,9 @@ if [ "$build_devel" == "y" ]; then
 	octave_settings="$octave_settings --HEAD"
 fi
 if [ "$build_gui" == "n" ]; then
-	octave_settings="$octave_settings --without-qt5"
+	octave_settings="$octave_settings --without-qt"
 else
-	octave_settings="$octave_settings --with-qt5"	
+	octave_settings="$octave_settings --with-qt=5"	
 fi
 if [ "$use_java" == "y" ]; then
 	octave_settings="$octave_settings --with-java"
