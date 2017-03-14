@@ -9,7 +9,7 @@ make_fail=n
 use_gcc=n
 use_java=n
 use_openblas=n
-dmg_dir="$HOME"
+dmg_dir="$HOME/Downloads"
 verbose=n
 with_test=y
 
@@ -59,7 +59,7 @@ while [[ $1 != "" ]]; do
   case "$1" in
     -a|--dmg-dir) if [ $# -gt 1 ]; then
           dmg_dir=$2; shift 2
-        else 
+        else
           echo "$1 requires an argument" >&2
           exit 1
         fi ;;
@@ -74,7 +74,7 @@ while [[ $1 != "" ]]; do
     -h|--help|-\?) usage; exit 0;;
     -i|--install-dir) if [ $# -gt 1 ]; then
           install_dir=$2; shift 2
-        else 
+        else
           echo "$1 requires an argument" >&2
           exit 1
         fi ;;
@@ -138,16 +138,17 @@ else
 	cd "$install_dir/Contents/Resources/usr/bin"
 fi
 
+rm -r "$install_dir/Contents/Resources/usr/share/doc/homebrew/"
 ./brew update # get new formulas
 ./brew upgrade # compile new formulas
 ./brew cleanup # remove old versions
 
 # be conservative regarding architectures
 # use Mac's (BSD) sed
-/usr/bin/sed -i '' 's/march=native/march=core2/g' "$install_dir/Contents/Resources/usr/Library/Homebrew/extend/ENV/super.rb" 
-/usr/bin/sed -i '' 's/march=native/march=core2/g' "$install_dir/Contents/Resources/usr/Library/Homebrew/extend/ENV/std.rb" 
+/usr/bin/sed -i '' 's/march=native/march=core2/g' "$install_dir/Contents/Resources/usr/Library/Homebrew/extend/ENV/super.rb"
+/usr/bin/sed -i '' 's/march=native/march=core2/g' "$install_dir/Contents/Resources/usr/Library/Homebrew/extend/ENV/std.rb"
 
-# go to the bin directory 
+# go to the bin directory
 cd "$install_dir/Contents/Resources/usr/bin"
 
 # install trash command line utility
@@ -171,9 +172,10 @@ gs_ver="$(./gs --version)"
 export GS_OPTIONS="-sICCProfilesDir=$install_dir/Contents/Resources/usr/opt/ghostscript/share/ghostscript/$gs_ver/iccprofiles/ -sGenericResourceDir=$install_dir/Contents/Resources/usr/opt/ghostscript/share/ghostscript/$gs_ver/Resource/ -sFontResourceDir=$install_dir/Contents/Resources/usr/opt/ghostscript/share/ghostscript/$gs_ver/Resource/Font"
 
 # install gnuplot 5.1 (HEAD)
-gnuplot_settings="--with-cairo --HEAD"
+#gnuplot_settings=" --with-cairo --HEAD"
+gnuplot_settings=" --with-cairo"
 if [ "$build_gui" == "y" ]; then
-	gnuplot_settings="$gnuplot_settings --with-qt=qt5"	
+	gnuplot_settings="$gnuplot_settings --with-qt"	
 fi
 if [ -d "/Library/Frameworks/AquaTerm.framework" ]; then
 	gnuplot_settings="$gnuplot_settings --with-aquaterm"
@@ -210,7 +212,7 @@ fi
 if [ "$use_experimental" == "y" ]; then
 	curl https://raw.githubusercontent.com/schoeps/homebrew-science/octave/octave.rb -o "$install_dir/Contents/Resources/usr/Library/Taps/homebrew/homebrew-science/octave.rb"
 fi
-	
+		
 # build octave
 octave_settings="--without-docs --build-from-source --without-java --with-audio --without-fltk --debug $blas_settings"
 if [ "$verbose" == "y" ]; then
@@ -231,7 +233,7 @@ if [ "$with_test" == "n" ]; then
 	octave_settings="$octave_settings --without-test"
 fi
 if [ "$make_fail" == "y" ]; then
-	# enforce failure 
+	# enforce failure
 	/usr/bin/sed -i '' 's/\".\/bootstrap" if build.head?/\"false\"/g' "$install_dir/Contents/Resources/usr/Library/Taps/homebrew/homebrew-science/octave.rb"
 fi
 
@@ -244,7 +246,7 @@ oct_ver_string="$(./octave --version | /usr/bin/sed -n 1p)"
 oct_copy="$(./octave --version | /usr/bin/sed -n 2p | /usr/bin/cut -c 15- )"
 
 # use local font cache instead of global one
-/usr/bin/sed -i '' 's/\/Applications.*fontconfig/~\/.cache\/fontconfig/g' "$install_dir/Contents/Resources/usr/etc/fonts/fonts.conf" 
+/usr/bin/sed -i '' 's/\/Applications.*fontconfig/~\/.cache\/fontconfig/g' "$install_dir/Contents/Resources/usr/etc/fonts/fonts.conf"
 
 # remove unnecessary files installed due to wrong dependency management
 if [ -d "$install_dir/Contents/Resources/usr/Cellar/pyqt" ]; then
@@ -353,11 +355,11 @@ iconutil -c icns -o "$install_dir/Contents/Resources/applet.icns" "$tmp_iconset"
 
 # create or update entries in the application's plist
 defaults write "$install_dir/Contents/Info" NSUIElement 1
-defaults write "$install_dir/Contents/Info" CFBundleIdentifier org.octave.Octave 
+defaults write "$install_dir/Contents/Info" CFBundleIdentifier org.octave.Octave
 defaults write "$install_dir/Contents/Info" CFBundleShortVersionString "$oct_ver"
 defaults write "$install_dir/Contents/Info" CFBundleVersion "$oct_ver_string"
 defaults write "$install_dir/Contents/Info" NSHumanReadableCopyright "$oct_copy"
-defaults write "$install_dir/Contents/Info" CFBundleDocumentTypes -array '{"CFBundleTypeExtensions" = ("m"); "CFBundleTypeOSTypes" = ("Mfile"); "CFBundleTypeRole" = "Editor";}'    
+defaults write "$install_dir/Contents/Info" CFBundleDocumentTypes -array '{"CFBundleTypeExtensions" = ("m"); "CFBundleTypeOSTypes" = ("Mfile"); "CFBundleTypeRole" = "Editor";}'
 plutil -convert xml1 "$install_dir/Contents/Info.plist"
 chmod a=r "$install_dir/Contents/Info.plist"
 
@@ -375,7 +377,7 @@ fi
 # clean up the strings using sed
 echo "" > "$install_dir/Contents/Resources/DEPENDENCIES"
 
-# force all formulas to be linked and list them in 
+# force all formulas to be linked and list them in
 # the file DEPENDENCIES
 ./brew list -1 | while read line
 do
@@ -384,6 +386,13 @@ do
 	./brew info $line | /usr/bin/sed -e 's$homebrew/science/$$g'| /usr/bin/sed -e 's$: .*$$g' | /usr/bin/sed -e 's$/Applications.*$$g' | /usr/bin/head -n3 >> "$install_dir/Contents/Resources/DEPENDENCIES"
 	echo "" >> "$install_dir/Contents/Resources/DEPENDENCIES"
 done
+rm -r "$install_dir/Contents/Resources/usr/var/"
+ln -s /var/ "$install_dir/Contents/Resources/usr/var"
+
+# clean up some homebrew directories that are not needed
+rm -r "$install_dir/Contents/Resources/usr/completions"
+rm -r "$install_dir/Contents/Resources/usr/share/doc"
+rm -r "$install_dir/Contents/Resources/usr/share/manpages"
 
 # create a nice dmg disc image with create-dmg (MIT License)
 if [ "$build_dmg" == "y" ]; then
@@ -417,7 +426,7 @@ if [ "$build_dmg" == "y" ]; then
 	--disk-image-size 2000 \
 	--background "$tmp_dir/background.tiff" \
 	"$dmg_dir/Octave-Installer.dmg" \
-	"$install_dir" 
+	"$install_dir"
 
 	echo DMG ready: $dmg_dir/Octave-Installer.dmg
 fi
